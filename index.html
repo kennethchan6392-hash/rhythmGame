@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK for online leaderboard -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="h-screen w-screen flex flex-col relative">
 
@@ -21,6 +24,28 @@
     <!-- 提示訊息 Toast -->
     <div id="toast-msg" class="fixed top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white font-bold px-6 py-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none text-center"></div>
 
+    <!-- 學生資料表單 -->
+    <div id="student-profile-overlay" class="fixed inset-0 z-48 bg-gradient-to-br from-purple-800/95 via-indigo-800/95 to-pink-800/95 flex flex-col items-center justify-center text-white hidden backdrop-blur-md">
+        <div class="text-6xl mb-4" style="animation: float 3s ease-in-out infinite">📝</div>
+        <h2 class="text-3xl font-black mb-2 tracking-wide">學生資料</h2>
+        <p class="text-sm text-white/60 mb-8">請輸入你的資料開始遊戲</p>
+        <div class="w-full max-w-sm px-8 space-y-5">
+            <div>
+                <label class="text-xs text-white/70 block mb-1 font-bold">姓名 Name</label>
+                <input type="text" id="input-student-name" placeholder="你的名字" class="student-input" maxlength="20">
+            </div>
+            <div>
+                <label class="text-xs text-white/70 block mb-1 font-bold">班級 Class</label>
+                <input type="text" id="input-student-class" placeholder="例: 3A" class="student-input" maxlength="10">
+            </div>
+            <div>
+                <label class="text-xs text-white/70 block mb-1 font-bold">學號 No.</label>
+                <input type="text" id="input-student-no" placeholder="例: 15" class="student-input" maxlength="10">
+            </div>
+            <button onclick="submitStudentProfile()" class="w-full bg-white text-purple-600 font-black text-lg py-3 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all mt-4">✨ 開始遊戲</button>
+        </div>
+    </div>
+
     <!-- 學習模式選單 -->
     <div id="view-learning" class="view-panel flex-1 flex flex-col h-full overflow-hidden">
         <div class="pt-6 pb-6 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
@@ -28,7 +53,10 @@
                 <div class="text-4xl font-black tracking-wider">🎵 音樂基礎訓練</div>
                 <div class="text-xs text-white/60 mt-1 tracking-wide">6個進階關卡</div>
             </div>
-            <div class="text-3xl cursor-pointer hover:scale-125 hover:rotate-12 transition-all duration-200">⚙️</div>
+            <div class="flex items-center gap-3">
+                <span class="student-badge" onclick="showStudentProfileForm()">未登入</span>
+                <span class="text-3xl cursor-pointer hover:scale-125 hover:rotate-12 transition-all duration-200" onclick="showStudentProfileForm()">⚙️</span>
+            </div>
         </div>
         <div class="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar space-y-5" id="level-list"></div>
     </div>
@@ -52,9 +80,29 @@
 
     <!-- 競技模式登入 -->
     <div id="view-comp-login" class="view-panel flex-1 flex flex-col items-center justify-center h-full hidden px-8 text-white">
-        <h2 class="text-4xl font-black mb-10 tracking-widest">輸入你的名字：</h2>
-        <input type="text" id="player-name" placeholder="你的名字" class="w-full bg-transparent border-b-2 border-white/50 text-center text-3xl font-bold py-2 focus:outline-none focus:border-white placeholder-white/30 text-white mb-12">
-        <button class="bg-white text-blue-500 font-bold text-xl py-3 px-12 rounded-lg shadow-lg active:scale-95" onclick="loginCompetition()">開始</button>
+        <h2 class="text-4xl font-black mb-6 tracking-widest">⚔️ 競技挑戰</h2>
+        <p class="text-lg text-white/70 mb-4" id="comp-player-info"></p>
+        <button class="bg-white text-blue-500 font-bold text-xl py-3 px-12 rounded-lg shadow-lg active:scale-95" onclick="startCompetitionMatch()">開始競技</button>
+    </div>
+
+    <!-- 排行榜 -->
+    <div id="view-leaderboard" class="view-panel flex-1 flex flex-col h-full overflow-hidden hidden">
+        <div class="pt-6 pb-4 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
+            <div class="flex flex-col">
+                <div class="text-4xl font-black tracking-wider">🏆 排行榜</div>
+                <div class="text-xs text-white/60 mt-1 tracking-wide" id="leaderboard-status">本地排行</div>
+            </div>
+            <button onclick="refreshLeaderboard()" class="text-3xl hover:scale-110 transition-transform">🔄</button>
+        </div>
+        <div class="px-6 mt-3 mb-2 flex gap-2 overflow-x-auto no-scrollbar" id="leaderboard-filters">
+            <button onclick="filterLeaderboard('all')" class="lb-filter-btn active">全部</button>
+            <button onclick="filterLeaderboard('learning')" class="lb-filter-btn">學習</button>
+            <button onclick="filterLeaderboard('performance')" class="lb-filter-btn">表演</button>
+            <button onclick="filterLeaderboard('competition')" class="lb-filter-btn">競技</button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar" id="leaderboard-list">
+            <div class="text-center text-white/50 py-12">載入中...</div>
+        </div>
     </div>
 
     <!-- 遊戲視圖 -->
@@ -185,9 +233,10 @@
 
     <!-- 底部導航 -->
     <div id="bottom-nav" class="bottom-nav fixed bottom-0 w-full h-24 flex justify-around items-center pb-4 px-4 z-30">
-        <div class="nav-item active flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('learning')"><span class="text-3xl">🎓</span><span class="text-xs font-bold text-white tracking-wide">學習</span></div>
-        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('performance')"><span class="text-3xl">🎤</span><span class="text-xs font-bold text-white tracking-wide">表演</span></div>
-        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('competition')"><span class="text-3xl">⭐</span><span class="text-xs font-bold text-white tracking-wide">競技</span></div>
+        <div class="nav-item active flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('learning')"><span class="text-2xl">🎓</span><span class="text-[10px] font-bold text-white tracking-wide">學習</span></div>
+        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('performance')"><span class="text-2xl">🎤</span><span class="text-[10px] font-bold text-white tracking-wide">表演</span></div>
+        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('competition')"><span class="text-2xl">⭐</span><span class="text-[10px] font-bold text-white tracking-wide">競技</span></div>
+        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('leaderboard')"><span class="text-2xl">🏆</span><span class="text-[10px] font-bold text-white tracking-wide">排行榜</span></div>
     </div>
 
     <script src="script.js"></script>

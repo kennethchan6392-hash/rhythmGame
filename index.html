@@ -11,10 +11,11 @@
 <body class="h-screen w-screen flex flex-col relative">
 
     <!-- 初始音效解鎖遮罩 -->
-    <div id="start-overlay" class="fixed inset-0 z-50 bg-slate-900/80 flex flex-col items-center justify-center text-white cursor-pointer" onclick="initApp()">
-        <div class="text-6xl mb-4 animate-bounce">🎵</div>
-        <h1 class="text-3xl font-black mb-2">節奏訓練</h1>
-        <p class="text-lg bg-white/20 px-6 py-2 rounded-full">點擊螢幕開始</p>
+    <div id="start-overlay" class="fixed inset-0 z-50 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-pink-900/90 flex flex-col items-center justify-center text-white cursor-pointer backdrop-blur-sm" onclick="initApp()">
+        <div class="text-7xl mb-6" style="animation: float 3s ease-in-out infinite">🎵</div>
+        <h1 class="text-4xl font-black mb-3 tracking-wider">節奏訓練</h1>
+        <p class="text-sm text-white/60 mb-8">專為小學音樂課設計</p>
+        <p class="text-lg bg-white/20 px-8 py-3 rounded-full border border-white/30 hover:bg-white/30 transition-all">點擊螢幕開始 →</p>
     </div>
 
     <!-- 提示訊息 Toast -->
@@ -58,65 +59,84 @@
 
     <!-- 遊戲視圖 -->
     <div id="view-game" class="fixed inset-0 z-40 bg-gradient-to-b from-green-400 to-blue-500 hidden flex flex-col">
-        <div class="pt-12 pb-2 px-4 flex justify-between items-center text-white">
-            <button class="text-2xl font-black px-4 py-2" onclick="exitGame()">〈</button>
-            <div id="game-title-display" class="font-bold text-lg"></div>
-            <div class="w-10"></div>
-        </div>
-        <div class="px-6 mb-4 flex-1 flex flex-col">
-            <div class="mb-3 flex justify-between items-center px-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold text-slate-700">4/4</span>
-                    <span class="text-xs text-slate-500">拍號</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-lg font-bold text-slate-700" id="game-bpm-display">90</span>
-                    <span class="text-xs text-slate-500">BPM</span>
+        <div class="pt-10 pb-2 px-4 flex justify-between items-center text-white">
+            <button class="text-2xl font-black px-4 py-2 hover:scale-110 transition-transform" onclick="exitGame()">〈</button>
+            <div class="text-center">
+                <div id="game-title-display" class="font-black text-lg tracking-wide"></div>
+                <div class="flex items-center justify-center gap-3 mt-1">
+                    <span class="bg-white/20 px-3 py-0.5 rounded-full text-xs font-bold">4/4</span>
+                    <span class="bg-white/20 px-3 py-0.5 rounded-full text-xs font-bold" id="game-bpm-display">90 BPM</span>
                 </div>
             </div>
+            <div class="flex flex-col items-center gap-1 min-w-[60px]">
+                <button onclick="pauseGame()" class="bg-white/20 hover:bg-white/35 active:scale-90 text-white font-black text-base w-9 h-9 rounded-full border border-white/30 flex items-center justify-center transition-all">⏸</button>
+                <div id="game-score-display" class="font-black text-lg text-yellow-300 drop-shadow leading-none">0</div>
+                <div class="text-[9px] text-white/50">分數</div>
+            </div>
+        </div>
+        <!-- 進度條 -->
+        <div class="px-4 mt-1">
+            <div class="game-progress-bar">
+                <div class="game-progress-fill" id="game-progress" style="width: 0%"></div>
+            </div>
+        </div>
+        <!-- 連擊顯示 -->
+        <div class="flex justify-center mt-2 mb-1">
+            <div id="game-combo-display" class="text-white/0 font-black text-lg transition-all duration-200"></div>
+        </div>
+        <div class="px-4 mb-2 flex-1 flex flex-col">
             <div class="score-container p-3 relative flex-1 flex flex-col justify-center">
                 <canvas id="gameCanvas" width="800" height="360" class="w-full h-auto bg-transparent"></canvas>
             </div>
         </div>
-        <div class="flex flex-col items-center justify-center text-white mb-3">
-            <div class="text-5xl animate-bounce mb-2">👟</div>
-            <p class="text-sm font-bold tracking-wider text-white/80">與動畫同步點擊螢幕</p>
+        <div class="flex flex-col items-center justify-center text-white mb-2">
+            <p class="text-sm font-bold tracking-wider text-white/70">🎵 跟著節拍點擊</p>
         </div>
-        <div class="flex-1 px-4 pb-8 flex flex-col">
+        <div class="flex-1 px-4 pb-6 flex flex-col">
             <button id="hit-pad" class="w-full h-full flex items-center justify-center focus:outline-none touch-manipulation">
-                <span class="text-8xl opacity-30 pointer-events-none">👆</span>
+                <span class="text-7xl opacity-30 pointer-events-none">👆</span>
             </button>
+        </div>
+        <!-- 暫停遮罩 -->
+        <div id="pause-overlay" class="hidden absolute inset-0 z-50 bg-black/55 backdrop-blur-sm flex flex-col items-center justify-center">
+            <div class="text-7xl mb-4">⏸️</div>
+            <h3 class="text-white font-black text-3xl mb-10 tracking-wide">已暫停</h3>
+            <button onclick="resumeGame()" class="bg-white text-blue-600 font-black text-xl py-4 px-14 rounded-full shadow-xl mb-4 hover:scale-105 active:scale-95 transition-all">▶ 繼續</button>
+            <button onclick="exitGame()" class="bg-white/20 hover:bg-white/30 text-white font-bold text-base py-3 px-10 rounded-full border border-white/40 active:scale-95 transition-all">退出</button>
         </div>
     </div>
 
     <!-- 結算視圖 -->
     <div id="view-result-normal" class="fixed inset-0 z-50 bg-gradient-to-b from-green-500 to-blue-600 hidden flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto">
-        <div class="text-8xl mb-3 animate-bounce">🏆</div>
-        <h2 id="result-title" class="text-4xl font-black mb-3">完美演奏！</h2>
-        <p class="text-white/70 text-sm mb-8 tracking-wide">演奏時間完成</p>
+        <div id="result-grade" class="text-8xl mb-2"></div>
+        <h2 id="result-title" class="text-3xl font-black mb-1"></h2>
+        <p id="result-accuracy" class="text-white/70 text-sm mb-6 tracking-wide"></p>
         
-        <div class="bg-white/15 backdrop-blur rounded-3xl p-8 w-full max-w-md mb-8 border border-white/30">
-            <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="bg-white/15 backdrop-blur rounded-3xl p-6 w-full max-w-md mb-6 border border-white/30">
+            <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
                     <div class="text-xs text-white/70 mb-1">分數</div>
-                    <div id="res-score" class="text-4xl font-black text-yellow-300">0</div>
+                    <div id="res-score" class="text-3xl font-black text-yellow-300">0</div>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
                     <div class="text-xs text-white/70 mb-1">最高連擊</div>
-                    <div id="res-combo" class="text-4xl font-black text-purple-300">0</div>
+                    <div id="res-combo" class="text-3xl font-black text-purple-300">0</div>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
                     <div class="text-xs text-white/70 mb-1">正確</div>
-                    <div id="res-perfect" class="text-4xl font-black text-green-300">0</div>
+                    <div id="res-perfect" class="text-3xl font-black text-green-300">0</div>
                 </div>
                 <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
                     <div class="text-xs text-white/70 mb-1">漏打</div>
-                    <div id="res-miss" class="text-4xl font-black text-red-300">0</div>
+                    <div id="res-miss" class="text-3xl font-black text-red-300">0</div>
                 </div>
             </div>
         </div>
         
-        <button class="bg-white text-blue-600 font-black text-lg py-4 px-20 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95" onclick="exitGame()">繼續</button>
+        <div class="flex gap-3 w-full max-w-md">
+            <button class="flex-1 bg-white/25 hover:bg-white/35 text-white font-black text-base py-3 rounded-2xl backdrop-blur shadow-lg active:scale-95 transition-all border border-white/50" onclick="replayGame()">🔄 重新挑戰</button>
+            <button class="flex-1 bg-white text-blue-600 font-black text-base py-3 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95" onclick="exitGame()">繼續 →</button>
+        </div>
     </div>
 
     <!-- 競技結算視圖 -->

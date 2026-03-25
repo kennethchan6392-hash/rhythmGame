@@ -1,0 +1,20 @@
+# 系統自動生成檔案
+.DS_Store
+Thumbs.db
+
+# VS Code 設定
+.vscode/*
+!.vscode/settings.json
+*.code-workspace
+
+# 遊戲資源（大檔案）
+*.mp3
+*.mp4
+*.wav
+*.png
+*.jpg
+*.jpeg
+
+# 日誌與快取
+*.log
+.cache

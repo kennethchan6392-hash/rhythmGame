@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>專業節奏訓練 APP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-screen w-screen flex flex-col relative">
+
+    <!-- 初始音效解鎖遮罩 -->
+    <div id="start-overlay" class="fixed inset-0 z-50 bg-slate-900/80 flex flex-col items-center justify-center text-white cursor-pointer" onclick="initApp()">
+        <div class="text-6xl mb-4 animate-bounce">🎵</div>
+        <h1 class="text-3xl font-black mb-2">節奏訓練</h1>
+        <p class="text-lg bg-white/20 px-6 py-2 rounded-full">點擊螢幕開始</p>
+    </div>
+
+    <!-- 提示訊息 Toast -->
+    <div id="toast-msg" class="fixed top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white font-bold px-6 py-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none text-center"></div>
+
+    <!-- 學習模式選單 -->
+    <div id="view-learning" class="view-panel flex-1 flex flex-col h-full overflow-hidden">
+        <div class="pt-6 pb-6 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
+            <div class="flex flex-col">
+                <div class="text-4xl font-black tracking-wider">🎵 音樂基礎訓練</div>
+                <div class="text-xs text-white/60 mt-1 tracking-wide">6個進階關卡</div>
+            </div>
+            <div class="text-3xl cursor-pointer hover:scale-125 hover:rotate-12 transition-all duration-200">⚙️</div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar space-y-5" id="level-list"></div>
+    </div>
+
+    <!-- 表演模式選單 -->
+    <div id="view-performance" class="view-panel flex-1 flex flex-col h-full overflow-hidden hidden">
+        <div class="pt-6 pb-6 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
+            <div class="flex flex-col">
+                <div class="text-4xl font-black tracking-wider">🎤 曲目列表</div>
+                <div class="text-xs text-white/60 mt-1 tracking-wide">精選音樂集合</div>
+            </div>
+            <div class="text-3xl">✉️</div>
+        </div>
+        <div class="px-8 mt-4 mb-4">
+            <div class="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/30 text-white shadow-lg text-center hover:bg-white/20 transition-all">
+                <p class="text-xs font-bold leading-relaxed">💡 提示：請將 MP3 檔案與 HTML 放在同一資料夾中</p>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-8 pb-28 no-scrollbar space-y-5" id="song-list"></div>
+    </div>
+
+    <!-- 競技模式登入 -->
+    <div id="view-comp-login" class="view-panel flex-1 flex flex-col items-center justify-center h-full hidden px-8 text-white">
+        <h2 class="text-4xl font-black mb-10 tracking-widest">輸入你的名字：</h2>
+        <input type="text" id="player-name" placeholder="你的名字" class="w-full bg-transparent border-b-2 border-white/50 text-center text-3xl font-bold py-2 focus:outline-none focus:border-white placeholder-white/30 text-white mb-12">
+        <button class="bg-white text-blue-500 font-bold text-xl py-3 px-12 rounded-lg shadow-lg active:scale-95" onclick="loginCompetition()">開始</button>
+    </div>
+
+    <!-- 遊戲視圖 -->
+    <div id="view-game" class="fixed inset-0 z-40 bg-gradient-to-b from-green-400 to-blue-500 hidden flex flex-col">
+        <div class="pt-12 pb-2 px-4 flex justify-between items-center text-white">
+            <button class="text-2xl font-black px-4 py-2" onclick="exitGame()">〈</button>
+            <div id="game-title-display" class="font-bold text-lg"></div>
+            <div class="w-10"></div>
+        </div>
+        <div class="px-6 mb-4 flex-1 flex flex-col">
+            <div class="mb-3 flex justify-between items-center px-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-slate-700">4/4</span>
+                    <span class="text-xs text-slate-500">拍號</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-lg font-bold text-slate-700" id="game-bpm-display">90</span>
+                    <span class="text-xs text-slate-500">BPM</span>
+                </div>
+            </div>
+            <div class="score-container p-3 relative flex-1 flex flex-col justify-center">
+                <canvas id="gameCanvas" width="800" height="360" class="w-full h-auto bg-transparent"></canvas>
+            </div>
+        </div>
+        <div class="flex flex-col items-center justify-center text-white mb-3">
+            <div class="text-5xl animate-bounce mb-2">👟</div>
+            <p class="text-sm font-bold tracking-wider text-white/80">與動畫同步點擊螢幕</p>
+        </div>
+        <div class="flex-1 px-4 pb-8 flex flex-col">
+            <button id="hit-pad" class="w-full h-full flex items-center justify-center focus:outline-none touch-manipulation">
+                <span class="text-8xl opacity-30 pointer-events-none">👆</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 結算視圖 -->
+    <div id="view-result-normal" class="fixed inset-0 z-50 bg-gradient-to-b from-green-500 to-blue-600 hidden flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto">
+        <div class="text-8xl mb-3 animate-bounce">🏆</div>
+        <h2 id="result-title" class="text-4xl font-black mb-3">完美演奏！</h2>
+        <p class="text-white/70 text-sm mb-8 tracking-wide">演奏時間完成</p>
+        
+        <div class="bg-white/15 backdrop-blur rounded-3xl p-8 w-full max-w-md mb-8 border border-white/30">
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
+                    <div class="text-xs text-white/70 mb-1">分數</div>
+                    <div id="res-score" class="text-4xl font-black text-yellow-300">0</div>
+                </div>
+                <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
+                    <div class="text-xs text-white/70 mb-1">最高連擊</div>
+                    <div id="res-combo" class="text-4xl font-black text-purple-300">0</div>
+                </div>
+                <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
+                    <div class="text-xs text-white/70 mb-1">正確</div>
+                    <div id="res-perfect" class="text-4xl font-black text-green-300">0</div>
+                </div>
+                <div class="bg-white/10 rounded-2xl p-4 hover:bg-white/20 transition-all">
+                    <div class="text-xs text-white/70 mb-1">漏打</div>
+                    <div id="res-miss" class="text-4xl font-black text-red-300">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <button class="bg-white text-blue-600 font-black text-lg py-4 px-20 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95" onclick="exitGame()">繼續</button>
+    </div>
+
+    <!-- 競技結算視圖 -->
+    <div id="view-result-comp" class="fixed inset-0 z-50 bg-gradient-to-b from-green-500 to-blue-600 hidden flex flex-col items-center justify-center p-8 text-white overflow-y-auto">
+        <h2 id="comp-song-title" class="text-5xl font-black mb-2 text-center drop-shadow-lg">比賽結果</h2>
+        <p class="text-white/70 text-sm mb-12">與對手的表現對比</p>
+        
+        <div class="w-full max-w-lg flex justify-between relative mb-12 bg-white/10 backdrop-blur rounded-3xl p-8 border border-white/30">
+            <div class="w-1/2 flex flex-col items-center border-r border-white/20 pr-6">
+                <div class="text-3xl font-black mb-3">👤</div>
+                <div class="text-sm font-bold mb-3 text-white/80">你</div>
+                <svg viewBox="0 0 36 36" class="circular-chart text-green-300 w-20 h-20">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="comp-player-ring" stroke="currentColor" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="22" class="percentage" id="comp-player-pct">0%</text>
+                </svg>
+            </div>
+            <div class="w-1/2 flex flex-col items-center pl-6">
+                <div class="text-3xl font-black mb-3">🤖</div>
+                <div class="text-sm font-bold mb-3 text-white/80">對手</div>
+                <svg viewBox="0 0 36 36" class="circular-chart text-amber-200 w-20 h-20">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="comp-bot-ring" stroke="currentColor" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="22" class="percentage" id="comp-bot-pct">0%</text>
+                </svg>
+            </div>
+        </div>
+        <h3 id="comp-result-text" class="text-5xl font-black mb-10 drop-shadow-lg">你贏了</h3>
+        
+        <div class="w-full max-w-lg flex gap-4 mb-12">
+            <div class="flex-1 bg-gradient-to-b from-amber-400 to-amber-600 rounded-2xl py-5 px-4 text-center shadow-lg hover:shadow-xl transition-all">
+                <div class="text-xs text-white/90 mb-2 font-bold tracking-wide">評分變化</div>
+                <div class="text-3xl font-black" id="comp-rating-change">+15</div>
+            </div>
+            <div class="flex-1 bg-gradient-to-b from-purple-400 to-purple-600 rounded-2xl py-5 px-4 text-center shadow-lg hover:shadow-xl transition-all">
+                <div class="text-xs text-white/90 mb-2 font-bold tracking-wide">新評分</div>
+                <div class="text-3xl font-black" id="comp-new-rating">1515</div>
+            </div>
+        </div>
+        
+        <div class="w-full max-w-lg flex flex-col gap-3">
+            <button class="w-full bg-white text-blue-600 font-black text-lg py-4 rounded-2xl shadow-xl hover:shadow-2xl active:scale-95 transition-all" onclick="startCompetitionMatch()">🔄 新回合</button>
+            <button class="w-full bg-white/25 hover:bg-white/35 text-white font-black text-lg py-4 rounded-2xl backdrop-blur shadow-lg active:scale-95 transition-all border border-white/50" onclick="exitGame()">← 回到選單</button>
+        </div>
+    </div>
+
+    <!-- 底部導航 -->
+    <div id="bottom-nav" class="bottom-nav fixed bottom-0 w-full h-24 flex justify-around items-center pb-4 px-4 z-30">
+        <div class="nav-item active flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('learning')"><span class="text-3xl">🎓</span><span class="text-xs font-bold text-white tracking-wide">學習</span></div>
+        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('performance')"><span class="text-3xl">🎤</span><span class="text-xs font-bold text-white tracking-wide">表演</span></div>
+        <div class="nav-item flex flex-col items-center gap-1 w-20 py-2 rounded-2xl" onclick="switchTab('competition')"><span class="text-3xl">⭐</span><span class="text-xs font-bold text-white tracking-wide">競技</span></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

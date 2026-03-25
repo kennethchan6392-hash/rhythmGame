@@ -1,0 +1,271 @@
+/* ===== 基礎變數 & 重置 ===== */
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+:root {
+    --primary-pink: #FF65A3; --primary-pink-dark: #D83A7D;
+    --primary-yellow: #FFCB45; --primary-yellow-dark: #E6A213;
+    --primary-green: #00D28E; --primary-green-dark: #00A66D;
+    --primary-blue: #00A6ED; --primary-blue-dark: #007AB2;
+    --primary-purple: #8B66FF; --primary-purple-dark: #6236FF;
+    --primary-red: #FF4A6B; --primary-red-dark: #D12546;
+
+    --bg-paper: #FFFDF8; --bg-light: #F4F7FB;
+    --text-dark: #2D3142; --text-light: #7E84A3;
+
+    --border-radius: 24px; --btn-radius: 16px;
+    --shadow-glass: 0 15px 35px rgba(139, 102, 255, 0.15);
+    --shadow-sm: 0 4px 10px rgba(0,0,0,0.04);
+    --shadow-md: 0 10px 25px rgba(45, 49, 66, 0.08);
+    --highlight-inner: inset 0 2px 0 rgba(255,255,255,0.4);
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #FF69B4 0%, #FFB6D9 20%, #FFD700 40%, #87CEEB 70%, #DDA0DD 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    touch-action: none; 
+    overflow: hidden;
+    user-select: none;
+    color: #333;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.12) 2px, transparent 2px);
+    background-size: 100px 100px, 150px 150px, 200px 200px;
+    animation: twinkling 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes twinkling {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-30px); }
+}
+
+#start-overlay { z-index: 49; }
+.view-panel { position: relative; z-index: 1; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* 關卡卡片樣式 */
+.level-card {
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.85), rgba(255, 218, 185, 0.85));
+    backdrop-filter: blur(12px);
+    border-radius: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    padding: 4px;
+}
+.level-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.4);
+}
+.level-card:active { 
+    transform: scale(0.92);
+    box-shadow: 0 12px 30px rgba(255, 105, 180, 0.35);
+}
+.level-card-header { 
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 24px;
+    font-weight: 900;
+    color: white;
+    padding: 32px 24px 28px 24px;
+}
+.level-num-badge {
+    position: absolute; right: 16px; top: 16px;
+    background: linear-gradient(135deg, #FF1493, #FF69B4);
+    color: white; font-weight: 900;
+    padding: 10px 18px; border-radius: 18px; 
+    box-shadow: 0 6px 20px rgba(255, 20, 147, 0.45);
+    z-index: 10;
+    font-size: 1.1em;
+    border: 3px solid white;
+    transition: all 0.3s ease;
+}
+.level-card:hover .level-num-badge {
+    transform: scale(1.15) rotate(-15deg);
+}
+
+/* 表演模式卡片 */
+.song-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(200, 230, 255, 0.92));
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(135, 206, 235, 0.35);
+    border: 2px solid rgba(135, 206, 250, 0.5);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.song-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 45px rgba(135, 206, 235, 0.5);
+}
+.song-card-title { 
+    font-size: 1.3rem; 
+    font-weight: 900; 
+    padding: 20px 24px; 
+    border-bottom: 3px solid #FFD700;
+    background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+    color: white;
+    letter-spacing: 0.5px;
+}
+.song-card-diffs { display: flex; justify-content: space-between; padding: 12px; background: #fff; gap: 8px; }
+.diff-btn { 
+    flex: 1; 
+    text-align: center; 
+    padding: 14px 8px; 
+    font-size: 0.95rem; 
+    font-weight: 800; 
+    color: #4a5568; 
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    background: linear-gradient(135deg, #E8F5FF, #F0F9FF);
+    border-radius: 16px;
+    border: 2px solid transparent;
+}
+.diff-btn:hover { 
+    background: linear-gradient(135deg, #FFE4B5, #FFDAB9);
+    transform: translateY(-4px);
+    color: #D84315;
+    border-color: #FFD700;
+}
+.diff-btn:active {
+    transform: scale(0.95);
+}
+
+/* 畫布容器 */
+.score-container { 
+    background: linear-gradient(135deg, rgba(255, 250, 240, 0.95), rgba(240, 255, 240, 0.95));
+    border-radius: 24px; 
+    box-shadow: 0 12px 35px rgba(100, 100, 100, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border: 3px solid rgba(139, 69, 19, 0.25);
+    backdrop-filter: blur(8px);
+    position: relative;
+    overflow: hidden;
+    padding: 12px;
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.02) 0px,
+        rgba(0, 0, 0, 0.02) 1px,
+        transparent 1px,
+        transparent 120px
+    );
+    image-rendering: crisp-edges;
+}
+
+/* 音樂遊戲視圖 */
+#view-game {
+    background: linear-gradient(135deg, rgba(255, 200, 215, 0.9), rgba(200, 240, 255, 0.9));
+    border-radius: 0;
+}
+
+#view-game .game-header {
+    background: linear-gradient(135deg, #FF69B4 0%, #87CEEB 100%);
+    color: white;
+    padding: 20px 24px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+#view-game .game-title {
+    font-size: 1.5em;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+#view-game .game-bpm {
+    font-size: 0.95em;
+    opacity: 0.92;
+    font-weight: 700;
+}
+#hit-pad { 
+    background: linear-gradient(135deg, #00D28E, #00FF88);
+    border-radius: 24px; 
+    border: 4px solid #00FF88; 
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+#hit-pad::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 70%);
+    pointer-events: none;
+}
+#hit-pad:hover {
+    box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+    transform: translateY(-2px);
+}
+#hit-pad.active-hit { 
+    background: linear-gradient(135deg, #00A66D, #00DD77);
+    box-shadow: 0 12px 40px rgba(0, 255, 136, 0.7);
+    transform: scale(0.93);
+}
+
+/* 底部導航欄 */
+.bottom-nav { 
+    background: linear-gradient(180deg, rgba(255, 182, 193, 0.4), rgba(135, 206, 235, 0.4));
+    backdrop-filter: blur(20px); 
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 -8px 30px rgba(100, 100, 100, 0.15);
+}
+.nav-item { 
+    opacity: 0.45; 
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    font-size: 1.8em;
+    padding: 12px 16px;
+    border-radius: 20px;
+}
+.nav-item:hover { 
+    opacity: 0.85;
+    transform: translateY(-4px) scale(1.08);
+}
+.nav-item.active { 
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-6px) scale(1.2);
+    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.5);
+}
+
+/* 競技圓形進度條 */
+.circular-chart { display: block; margin: 0 auto; max-width: 80%; max-height: 250px; }
+.circle-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 3.8; }
+.circle { fill: none; stroke-width: 3.8; stroke-linecap: round; transition: stroke-dasharray 1s ease-out; }
+.percentage { fill: white; font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 10px; text-anchor: middle; }\n\n/* 提示訊息動畫 */\n#toast-msg {\n    animation: slideIn 0.3s ease-out, slideOut 0.3s ease-in 2.7s;\n}\n\n@keyframes slideIn {\n    from {\n        opacity: 0;\n        transform: translateY(-20px);\n    }\n    to {\n        opacity: 1;\n        transform: translateY(0);\n    }\n}\n\n@keyframes slideOut {\n    from {\n        opacity: 1;\n        transform: translateY(0);\n    }\n    to {\n        opacity: 0;\n        transform: translateY(-20px);\n    }\n}\n\n/* 按鈕樣式 */\nbutton {\n    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);\n    font-family: 'Nunito', sans-serif;\n}\n\nbutton:hover:not(:disabled) {\n    transform: translateY(-3px);\n    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;\n}\n\nbutton:active:not(:disabled) {\n    transform: scale(0.95);\n}\n\n/* 輸入框樣式 */\ninput[type=\"text\"] {\n    transition: all 0.3s ease;\n}\n\ninput[type=\"text\"]:focus {\n    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);\n}"

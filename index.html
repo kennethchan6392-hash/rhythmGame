@@ -51,7 +51,7 @@
         <div class="pt-6 pb-6 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
             <div class="flex flex-col">
                 <div class="text-4xl font-black tracking-wider">🎵 音樂基礎訓練</div>
-                <div class="text-xs text-white/60 mt-1 tracking-wide">6個進階關卡</div>
+                <div class="text-xs text-white/60 mt-1 tracking-wide">8個學習關卡</div>
             </div>
             <div class="flex items-center gap-3">
                 <span class="student-badge" onclick="showStudentProfileForm()">未登入</span>
@@ -95,10 +95,10 @@
             <button onclick="refreshLeaderboard()" class="text-3xl hover:scale-110 transition-transform">🔄</button>
         </div>
         <div class="px-6 mt-3 mb-2 flex gap-2 overflow-x-auto no-scrollbar" id="leaderboard-filters">
-            <button onclick="filterLeaderboard('all')" class="lb-filter-btn active">全部</button>
-            <button onclick="filterLeaderboard('learning')" class="lb-filter-btn">學習</button>
-            <button onclick="filterLeaderboard('performance')" class="lb-filter-btn">表演</button>
-            <button onclick="filterLeaderboard('competition')" class="lb-filter-btn">競技</button>
+            <button onclick="filterLeaderboard('all', this)" class="lb-filter-btn active">全部</button>
+            <button onclick="filterLeaderboard('learning', this)" class="lb-filter-btn">學習</button>
+            <button onclick="filterLeaderboard('performance', this)" class="lb-filter-btn">表演</button>
+            <button onclick="filterLeaderboard('competition', this)" class="lb-filter-btn">競技</button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar" id="leaderboard-list">
             <div class="text-center text-white/50 py-12">載入中...</div>

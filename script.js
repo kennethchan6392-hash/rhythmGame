@@ -1,6 +1,6 @@
 // --- 核心變數 ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let isAppReady = false, playerName = "Player", playerRating = 1500, currentGameMode = 'learning';
+let playerName = "Player", currentGameMode = 'learning';
 let bgmBuffer = null, bgmSource = null;
 let beatmap = [], BEAT_MS = 0, totalMeasures = 0, isPlaying = false, gameStartTime = 0, animationId;
 let isPaused = false, pausedAt = 0;
@@ -158,10 +158,10 @@ function refreshLeaderboard() {
     showToast('🔄 已更新排行榜');
 }
 
-function filterLeaderboard(filter) {
+function filterLeaderboard(filter, btn) {
     currentLeaderboardFilter = filter;
-    document.querySelectorAll('.lb-filter-btn').forEach(function(btn) { btn.classList.remove('active'); });
-    event.target.classList.add('active');
+    document.querySelectorAll('.lb-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
     renderLeaderboard();
 }
 
@@ -177,15 +177,16 @@ function renderLeaderboard() {
             listEl.innerHTML = '<div class="text-center text-white/50 py-12"><div class="text-4xl mb-3">📭</div><div>暫無記錄<br><span class="text-xs">完成遊戲後會出現在這裡</span></div></div>';
             return;
         }
-        var html = '';
+        var parts = [];
         var modeLabels = { learning: '學習', performance: '表演', competition: '競技' };
+        var rankEmojis = ['🥇','🥈','🥉'];
         entries.forEach(function(entry, idx) {
             var rankClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : 'normal';
-            var rankText = idx < 3 ? ['🥇','🥈','🥉'][idx] : (idx + 1);
+            var rankText = idx < 3 ? rankEmojis[idx] : (idx + 1);
             var isSelf = studentProfile && entry.name === studentProfile.name && entry.className === studentProfile.className && entry.studentNo === studentProfile.studentNo;
             var dateStr = entry.timestamp ? new Date(entry.timestamp).toLocaleDateString('zh-TW') : '';
             var modeLabel = modeLabels[entry.mode] || entry.mode || '';
-            html += '<div class="lb-entry' + (isSelf ? ' self' : '') + '">' +
+            parts.push('<div class="lb-entry' + (isSelf ? ' self' : '') + '">' +
                 '<div class="lb-rank ' + rankClass + '">' + rankText + '</div>' +
                 '<div class="lb-info">' +
                     '<div class="lb-name">' + escapeHTML(entry.name) + '</div>' +
@@ -195,16 +196,14 @@ function renderLeaderboard() {
                     '<div class="lb-score-num">' + (entry.score || 0) + '</div>' +
                     '<div class="lb-score-label">' + (entry.accuracy || 0) + '% 正確</div>' +
                 '</div>' +
-            '</div>';
+            '</div>');
         });
-        listEl.innerHTML = html;
+        listEl.innerHTML = parts.join('');
     });
 }
 
 function escapeHTML(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ===== MUSIC NOTE/REST IMAGES (SVG Data URIs) =====
@@ -226,28 +225,34 @@ var NOTE_SVG_STRINGS = {
 };
 
 function preloadNoteImages() {
-    // Create images synchronously with proper loading checks
     Object.keys(NOTE_SVG_STRINGS).forEach(function(key) {
         var img = new Image();
-        img.onload = function() { 
-            // Image loaded, safe to use
-        };
-        img.onerror = function() {
-            console.warn('Failed to load note image:', key);
-        };
+        img.onerror = function() { console.warn('Failed to load note image:', key); };
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(NOTE_SVG_STRINGS[key]);
         NOTE_IMAGES[key] = img;
     });
+    NOTE_SVG_STRINGS = null; // Free string memory after images are preloading
 }
 
 // --- 關卡與歌曲資料 ---
+// difficulty: 入門 → 初級 → 中級 → 進階 → 挑戰
 const LEARNING_LEVELS = [
-    { id: 1, title: '🎵 四個四分音符', bpm: 90, measures: 4, pattern: [{b:0, t:'quarter'}, {b:1, t:'quarter'}, {b:2, t:'quarter'}, {b:3, t:'quarter'}] },
-    { id: 2, title: '♪ 八分組合', bpm: 90, measures: 4, pattern: [{b:0, t:'quarter'}, {b:1, t:'eighth'}, {b:1.5, t:'eighth'}, {b:2, t:'quarter'}, {b:3, t:'quarter'}] },
-    { id: 3, title: '⏸️ 四分休止符', bpm: 90, measures: 4, pattern: [{b:0, t:'quarter'}, {b:1, t:'quarter'}, {b:2, t:'quarter'}, {b:3, t:'rest', subtype: 'quarter'}] },
-    { id: 4, title: '⏹️ 二分休止符', bpm: 90, measures: 4, pattern: [{b:0, t:'rest', subtype: 'half'}, {b:2, t:'rest', subtype: 'half'}] },
-    { id: 5, title: '🎼 全音符', bpm: 90, measures: 4, pattern: [{b:0, t:'whole'}] },
-    { id: 6, title: '♫ 十六分音符', bpm: 90, measures: 4, pattern: [{b:0, t:'sixteenth'}, {b:0.25, t:'sixteenth'}, {b:0.5, t:'sixteenth'}, {b:0.75, t:'sixteenth'}, {b:1, t:'quarter'}, {b:2, t:'quarter'}, {b:3, t:'quarter'}] }
+    { id:1, emoji:'🎵', title:'四個四分音符', desc:'認識四分音符，每拍打一下', bpm:80,  measures:4, difficulty:'入門',
+      pattern:[{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}] },
+    { id:2, emoji:'🎵', title:'二分音符',     desc:'每個音符持續兩拍，緩慢練習', bpm:80,  measures:4, difficulty:'入門',
+      pattern:[{b:0,t:'half'},{b:2,t:'half'}] },
+    { id:3, emoji:'♪',  title:'八分音符組合', desc:'每拍可以分成兩個快速音符', bpm:88,  measures:4, difficulty:'初級',
+      pattern:[{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'quarter'}] },
+    { id:4, emoji:'🤫', title:'四分休止符',   desc:'看到休止符要靜默，不能打！', bpm:88,  measures:4, difficulty:'初級',
+      pattern:[{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'rest',subtype:'quarter'}] },
+    { id:5, emoji:'⏸️', title:'二分休止符',   desc:'休止兩拍，考驗你的節拍感', bpm:90,  measures:4, difficulty:'中級',
+      pattern:[{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'rest',subtype:'half'}] },
+    { id:6, emoji:'🌕', title:'全音符',       desc:'一個全音符佔滿整個小節四拍', bpm:80,  measures:4, difficulty:'中級',
+      pattern:[{b:0,t:'whole'}] },
+    { id:7, emoji:'♫',  title:'十六分音符',   desc:'四個超速音符擠在同一拍裡', bpm:88,  measures:4, difficulty:'進階',
+      pattern:[{b:0,t:'sixteenth'},{b:0.25,t:'sixteenth'},{b:0.5,t:'sixteenth'},{b:0.75,t:'sixteenth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}] },
+    { id:8, emoji:'🏆', title:'綜合挑戰',     desc:'混合所有音符類型，挑戰極限！', bpm:96, measures:8, difficulty:'挑戰',
+      pattern:[{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'sixteenth'},{b:2.25,t:'sixteenth'},{b:2.5,t:'quarter'},{b:3,t:'rest',subtype:'quarter'}] },
 ];
 
 const SONGS = [
@@ -260,7 +265,6 @@ const SONGS = [
 function initApp() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     document.getElementById('start-overlay').classList.add('hidden');
-    isAppReady = true;
     preloadNoteImages();
     initFirebase();
     renderLevelList();
@@ -273,23 +277,36 @@ function initApp() {
     }
 }
 
+let _toastTimer = null;
 function showToast(msg) {
     const t = document.getElementById('toast-msg');
     t.innerText = msg; t.classList.replace('opacity-0', 'opacity-100');
-    setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.replace('opacity-100', 'opacity-0'), 3000);
 }
+
+const DIFF_COLORS = {
+    '入門': 'diff-beginner',
+    '初級': 'diff-elementary',
+    '中級': 'diff-intermediate',
+    '進階': 'diff-advanced',
+    '挑戰': 'diff-challenge'
+};
 
 function renderLevelList() {
     const list = document.getElementById('level-list');
-    const emojis = ['🎵', '🎶', '♪', '♫', '🎼', '🎹'];
     list.innerHTML = LEARNING_LEVELS.map(lvl => {
-        const emoji = emojis[lvl.id % emojis.length];
+        const diffClass = DIFF_COLORS[lvl.difficulty] || '';
         return `
         <div class="level-card cursor-pointer hover:scale-105 transition-transform" onclick="startLearning(${lvl.id})">
             <div class="level-num-badge">${lvl.id}</div>
-            <div class="level-card-header p-5 pl-10 flex justify-between items-center">
-                <div class="font-black text-slate-800 text-xl">${lvl.title}</div>
-                <div class="text-4xl">${emoji}</div>
+            <div class="level-card-header p-4 pr-14">
+                <div class="flex items-start gap-2 mb-1">
+                    <div class="font-black text-slate-800 text-xl leading-tight flex-1">${lvl.emoji} ${lvl.title}</div>
+                    <span class="diff-badge ${diffClass}">${lvl.difficulty}</span>
+                </div>
+                <div class="text-sm text-slate-600 font-semibold mb-2">${lvl.desc}</div>
+                <div class="text-xs text-slate-400 font-bold">♩ ${lvl.bpm} BPM &nbsp;·&nbsp; ${lvl.measures} 小節</div>
             </div>
         </div>`;
     }).join('');
@@ -319,13 +336,26 @@ function renderSongList() {
     }).join('');
 }
 
+const TAB_CONFIG = {
+    learning:    { view: 'view-learning',    idx: 0 },
+    performance: { view: 'view-performance', idx: 1 },
+    competition: { view: 'view-comp-login',  idx: 2 },
+    leaderboard: { view: 'view-leaderboard', idx: 3 },
+};
+
 function switchTab(tabId) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const cfg = TAB_CONFIG[tabId];
+    if (!cfg) return;
     document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
-    if(tabId === 'learning') { document.getElementById('view-learning').classList.remove('hidden'); document.querySelectorAll('.nav-item')[0].classList.add('active'); }
-    else if(tabId === 'performance') { document.getElementById('view-performance').classList.remove('hidden'); document.querySelectorAll('.nav-item')[1].classList.add('active'); }
-    else if(tabId === 'competition') { document.querySelectorAll('.nav-item')[2].classList.add('active'); document.getElementById('view-comp-login').classList.remove('hidden'); if (studentProfile) { document.getElementById('comp-player-info').innerText = studentProfile.className + ' ' + studentProfile.name + ' (#' + studentProfile.studentNo + ')'; } }
-    else if(tabId === 'leaderboard') { document.getElementById('view-leaderboard').classList.remove('hidden'); document.querySelectorAll('.nav-item')[3].classList.add('active'); renderLeaderboard(); }
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(cfg.view).classList.remove('hidden');
+    document.querySelectorAll('.nav-item')[cfg.idx].classList.add('active');
+    if (tabId === 'competition' && studentProfile) {
+        document.getElementById('comp-player-info').innerText =
+            studentProfile.className + ' ' + studentProfile.name + ' (#' + studentProfile.studentNo + ')';
+    } else if (tabId === 'leaderboard') {
+        renderLeaderboard();
+    }
 }
 
 function generateSongPattern(songId, difficulty) {
@@ -345,47 +375,43 @@ function generateSongPattern(songId, difficulty) {
     return [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'quarter'}];
 }
 
+// Module-level constants: avoids recreating pattern arrays on every measure during beatmap generation
+const VARIED_PATTERNS = {
+    's2_簡單': [
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'rest'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'rest'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'rest'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'rest'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'half'},{b:2,t:'half'}],
+        [{b:0,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'},{b:3.5,t:'eighth'}],
+        [{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
+    ],
+    's2_中等': [
+        [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'rest',subtype:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'half'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
+    ],
+    's2_困難': [
+        [{b:0,t:'sixteenth'},{b:0.25,t:'sixteenth'},{b:0.5,t:'sixteenth'},{b:0.75,t:'sixteenth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
+        [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'eighth'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
+        [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
+        [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'eighth'}],
+        [{b:0,t:'quarter'},{b:1,t:'sixteenth'},{b:1.25,t:'sixteenth'},{b:1.5,t:'sixteenth'},{b:1.75,t:'sixteenth'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
+    ]
+};
+
 function getVariedMeasurePattern(songId, difficulty, measureIndex) {
-    // Get a different rhythm for each measure - 8 varied patterns for richness
-    if (songId === 's2' && difficulty === '簡單') {
-        const patterns = [
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'rest'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'rest'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'rest'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'rest'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'half'},{b:2,t:'half'}],
-            [{b:0,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'},{b:3.5,t:'eighth'}],
-            [{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
-        ];
-        return patterns[measureIndex % patterns.length];
-    }
-    if (songId === 's2' && difficulty === '中等') {
-        const patterns = [
-            [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'rest', subtype:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'half'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
-        ];
-        return patterns[measureIndex % patterns.length];
-    }
-    if (songId === 's2' && difficulty === '困難') {
-        const patterns = [
-            [{b:0,t:'sixteenth'},{b:0.25,t:'sixteenth'},{b:0.5,t:'sixteenth'},{b:0.75,t:'sixteenth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'quarter'}],
-            [{b:0,t:'quarter'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'quarter'},{b:3,t:'eighth'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'eighth'},{b:1.5,t:'eighth'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
-            [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'eighth'},{b:2.5,t:'eighth'},{b:3,t:'eighth'}],
-            [{b:0,t:'eighth'},{b:0.5,t:'eighth'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'eighth'}],
-            [{b:0,t:'quarter'},{b:1,t:'sixteenth'},{b:1.25,t:'sixteenth'},{b:1.5,t:'sixteenth'},{b:1.75,t:'sixteenth'},{b:2,t:'quarter'},{b:3,t:'quarter'}]
-        ];
-        return patterns[measureIndex % patterns.length];
-    }
+    const patterns = VARIED_PATTERNS[songId + '_' + difficulty];
+    if (patterns) return patterns[measureIndex % patterns.length];
     return [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}];
 }
 
@@ -409,6 +435,7 @@ function launchGameEngine(pattern, bpm, measures, titleText, songId, difficulty,
                 beatInMeasure: n.b,
                 absoluteBeat: m * 4 + n.b,
                 type: n.t,
+                subtype: n.subtype,   // preserve rest subtype for correct symbol rendering
                 hitState: n.t === 'rest' ? 'rest' : 'pending'
             });
         });
@@ -501,7 +528,7 @@ function replayGame() {
 function startLearning(id) {
     const lvl = LEARNING_LEVELS.find(l => l.id === id);
     currentGameMode = 'learning'; bgmBuffer = null;
-    launchGameEngine(lvl.pattern, lvl.bpm, lvl.measures, `Lv.${lvl.id} ${lvl.title}`, null, null);
+    launchGameEngine(lvl.pattern, lvl.bpm, lvl.measures, `Lv.${lvl.id} ${lvl.emoji} ${lvl.title}`, null, null);
 }
 
 function startSong(id, diff) {
@@ -802,7 +829,6 @@ function gameLoop() {
 
     // === RENDER NOTES (use pre-grouped beatmap) ===
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#cbd5e1';
     ctx.fillStyle = '#1a1a2e';
     ctx.strokeStyle = '#1e293b';
     
@@ -897,17 +923,19 @@ function handleHit() {
     const now = audioCtx.currentTime;
     const absBeat = (now - gameStartTime) / (BEAT_MS / 1000);
     
-    const pendingNotes = beatmap.filter(n => n.hitState === 'pending');
-    if (pendingNotes.length === 0) return;
-    
-    let closest = pendingNotes[0];
-    for (let n of pendingNotes) {
-        if (Math.abs(n.absoluteBeat - absBeat) < Math.abs(closest.absoluteBeat - absBeat)) {
-            closest = n;
+    // Only scan notes in the current ± 1 measure window (avoids full O(n) filter)
+    const curMHit = Math.max(0, Math.floor(absBeat / 4));
+    let closest = null, closestDist = Infinity;
+    for (let m = Math.max(0, curMHit - 1); m <= Math.min(totalMeasures - 1, curMHit + 1); m++) {
+        for (const n of (beatmap.measureGroups[m] || [])) {
+            if (n.hitState === 'pending') {
+                const dist = Math.abs(n.absoluteBeat - absBeat);
+                if (dist < closestDist) { closestDist = dist; closest = n; }
+            }
         }
     }
-    
-    if (closest && Math.abs(closest.absoluteBeat - absBeat) < 0.3) {
+
+    if (closest && closestDist < 0.3) {
         closest.hitState = 'perfect';
         stats.perfect++;
         stats.combo++;

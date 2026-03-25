@@ -568,3 +568,20 @@ input[type="text"]:focus {
 .lb-score { text-align: right; flex-shrink: 0; }
 .lb-score-num { font-weight: 900; font-size: 1.1rem; color: #FFD700; }
 .lb-score-label { font-size: 0.6rem; color: rgba(255,255,255,0.4); font-weight: 700; }
+
+/* ===== Difficulty Badges ===== */
+.diff-badge {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 900;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: 0.3px;
+}
+.diff-badge.diff-beginner    { background: rgba(74, 222, 128, 0.9);  color: #14532d; }
+.diff-badge.diff-elementary  { background: rgba(250, 204, 21, 0.9);  color: #713f12; }
+.diff-badge.diff-intermediate{ background: rgba(251, 146, 60, 0.9);  color: #7c2d12; }
+.diff-badge.diff-advanced    { background: rgba(248, 113, 113, 0.9); color: #7f1d1d; }
+.diff-badge.diff-challenge   { background: rgba(167, 139, 250, 0.9); color: #2e1065; }

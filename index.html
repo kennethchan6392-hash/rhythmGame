@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>專業節奏訓練 APP</title>
+    <title>音楽の森 | 節奏訓練</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -13,19 +13,28 @@
 </head>
 <body class="h-screen w-screen flex flex-col relative">
 
-    <!-- 初始音效解鎖遮罩 -->
-    <div id="start-overlay" class="fixed inset-0 z-50 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-pink-900/90 flex flex-col items-center justify-center text-white cursor-pointer backdrop-blur-sm" onclick="initApp()">
-        <div class="text-7xl mb-6" style="animation: float 3s ease-in-out infinite">🎵</div>
-        <h1 class="text-4xl font-black mb-3 tracking-wider">節奏訓練</h1>
-        <p class="text-sm text-white/60 mb-8">專為小學音樂課設計</p>
-        <p class="text-lg bg-white/20 px-8 py-3 rounded-full border border-white/30 hover:bg-white/30 transition-all">點擊螢幕開始 →</p>
+    <!-- 安全起動點擊避罩罩 -->
+    <div id="start-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center text-white cursor-pointer backdrop-blur-sm overflow-hidden" style="background:linear-gradient(180deg,#0D2117 0%,#153020 40%,#1a3820 70%,#0A1B0E 100%)" onclick="initApp()">
+        <!-- 森林山州剛影 -->
+        <div style="position:absolute;bottom:0;left:0;right:0;height:28%;background:radial-gradient(ellipse 150% 100% at 20% 100%,#071a0c 0%,transparent 60%),radial-gradient(ellipse 130% 95% at 75% 100%,#0c2214 0%,transparent 55%);pointer-events:none"></div>
+        <!-- 螢火蟲 -->
+        <div style="position:absolute;top:18%;left:28%;width:4px;height:4px;border-radius:50%;background:#c8ff88;opacity:0.75;animation:float 4s ease-in-out 0.5s infinite;box-shadow:0 0 10px #c8ff88,0 0 20px #8aff44"></div>
+        <div style="position:absolute;top:30%;left:62%;width:3px;height:3px;border-radius:50%;background:#a8f868;opacity:0.65;animation:float 5s ease-in-out 1.3s infinite;box-shadow:0 0 8px #a8f868,0 0 15px #7aee30"></div>
+        <div style="position:absolute;top:22%;left:16%;width:3px;height:3px;border-radius:50%;background:#d8ff98;opacity:0.6;animation:float 4.5s ease-in-out 2.1s infinite;box-shadow:0 0 8px #d8ff98"></div>
+        <div style="position:absolute;top:12%;left:75%;width:2px;height:2px;border-radius:50%;background:#b8ff78;opacity:0.5;animation:float 6s ease-in-out 0.8s infinite;box-shadow:0 0 6px #b8ff78"></div>
+        <div class="relative z-10 flex flex-col items-center">
+            <div class="text-8xl mb-5" style="animation:float 3s ease-in-out infinite;filter:drop-shadow(0 4px 20px rgba(100,210,80,0.5))">&#127807;</div>
+            <h1 class="text-4xl font-black mb-2 tracking-widest" style="text-shadow:0 2px 20px rgba(120,220,80,0.5)">&#38899;&#27005;&#12398;&#26862;</h1>
+            <p class="text-xs text-white/50 mb-8 tracking-widest">節奏訓練・小學音樂課</p>
+            <p class="text-base px-8 py-3 rounded-full border border-white/20 hover:bg-white/10 transition-all" style="background:rgba(255,255,255,0.08)">輕觸螢幕，進入森林 ♪</p>
+        </div>
     </div>
 
     <!-- 提示訊息 Toast -->
     <div id="toast-msg" class="fixed top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white font-bold px-6 py-3 rounded-lg shadow-xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none text-center"></div>
 
     <!-- 學生資料表單 -->
-    <div id="student-profile-overlay" class="fixed inset-0 z-48 bg-gradient-to-br from-purple-800/95 via-indigo-800/95 to-pink-800/95 flex flex-col items-center justify-center text-white hidden backdrop-blur-md">
+    <div id="student-profile-overlay" class="fixed inset-0 z-48 flex flex-col items-center justify-center text-white hidden backdrop-blur-md" style="background:linear-gradient(160deg,rgba(22,55,35,0.97),rgba(18,45,28,0.97),rgba(10,30,18,0.97))">
         <div class="text-6xl mb-4" style="animation: float 3s ease-in-out infinite">📝</div>
         <h2 class="text-3xl font-black mb-2 tracking-wide">學生資料</h2>
         <p class="text-sm text-white/60 mb-8">請輸入你的資料開始遊戲</p>
@@ -42,12 +51,23 @@
                 <label class="text-xs text-white/70 block mb-1 font-bold">學號 No.</label>
                 <input type="text" id="input-student-no" placeholder="例: 15" class="student-input" maxlength="10">
             </div>
-            <button onclick="submitStudentProfile()" class="w-full bg-white text-purple-600 font-black text-lg py-3 rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all mt-4">✨ 開始遊戲</button>
+            <button onclick="submitStudentProfile()" class="btn btn-wood btn-lg btn-full mt-4">✨ 開始遊戲</button>
         </div>
     </div>
 
     <!-- 學習模式選單 -->
     <div id="view-learning" class="view-panel flex-1 flex flex-col h-full overflow-hidden">
+        <!-- 浮動音符裝飾層 -->
+        <div class="floating-notes-bg" aria-hidden="true">
+            <span class="fn" style="--x:8%;--d:0s;--s:1.1">&#9833;</span>
+            <span class="fn" style="--x:20%;--d:1.4s;--s:0.8">&#9834;</span>
+            <span class="fn" style="--x:35%;--d:0.6s;--s:1.3">&#9835;</span>
+            <span class="fn" style="--x:50%;--d:2.1s;--s:0.9">&#9833;</span>
+            <span class="fn" style="--x:64%;--d:0.3s;--s:1.2">&#9836;</span>
+            <span class="fn" style="--x:78%;--d:1.7s;--s:0.7">&#9834;</span>
+            <span class="fn" style="--x:90%;--d:0.9s;--s:1.0">&#9835;</span>
+            <span class="fn" style="--x:14%;--d:2.5s;--s:0.85">&#9836;</span>
+        </div>
         <div class="pt-6 pb-6 px-8 flex justify-between items-center text-white bg-black/20 backdrop-blur-sm">
             <div class="flex flex-col">
                 <div class="text-4xl font-black tracking-wider">🎵 音樂基礎訓練</div>
@@ -59,6 +79,10 @@
             </div>
         </div>
         <div class="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar space-y-5" id="level-list"></div>
+        <!-- Soot Sprites \u5a64\u5a67\u5c0f\u7cbe\u9748 -->
+        <div class="soot-sprite" style="left:4%;bottom:84px;width:14px;height:14px;--sp-dur:3.2s;--sp-delay:0s"></div>
+        <div class="soot-sprite" style="left:90%;bottom:96px;width:10px;height:10px;--sp-dur:2.7s;--sp-delay:1.1s"></div>
+        <div class="soot-sprite" style="left:50%;bottom:78px;width:12px;height:12px;--sp-dur:3.9s;--sp-delay:2.2s"></div>
     </div>
 
     <!-- 表演模式選單 -->
@@ -82,7 +106,7 @@
     <div id="view-comp-login" class="view-panel flex-1 flex flex-col items-center justify-center h-full hidden px-8 text-white">
         <h2 class="text-4xl font-black mb-6 tracking-widest">⚔️ 競技挑戰</h2>
         <p class="text-lg text-white/70 mb-4" id="comp-player-info"></p>
-        <button class="bg-white text-blue-500 font-bold text-xl py-3 px-12 rounded-lg shadow-lg active:scale-95" onclick="startCompetitionMatch()">開始競技</button>
+        <button class="btn btn-primary btn-lg" onclick="startCompetitionMatch()">⚔️ 開始競技</button>
     </div>
 
     <!-- 排行榜 -->
@@ -106,9 +130,9 @@
     </div>
 
     <!-- 遊戲視圖 -->
-    <div id="view-game" class="fixed inset-0 z-40 bg-gradient-to-b from-green-400 to-blue-500 hidden flex flex-col">
+    <div id="view-game" class="fixed inset-0 z-40 hidden flex flex-col">
         <div class="pt-10 pb-2 px-4 flex justify-between items-center text-white">
-            <button class="text-2xl font-black px-4 py-2 hover:scale-110 transition-transform" onclick="exitGame()">〈</button>
+            <button class="btn btn-ghost btn-sm text-2xl" onclick="exitGame()">〈</button>
             <div class="text-center">
                 <div id="game-title-display" class="font-black text-lg tracking-wide"></div>
                 <div class="flex items-center justify-center gap-3 mt-1">
@@ -149,13 +173,13 @@
         <div id="pause-overlay" class="hidden absolute inset-0 z-50 bg-black/55 backdrop-blur-sm flex flex-col items-center justify-center">
             <div class="text-7xl mb-4">⏸️</div>
             <h3 class="text-white font-black text-3xl mb-10 tracking-wide">已暫停</h3>
-            <button onclick="resumeGame()" class="bg-white text-blue-600 font-black text-xl py-4 px-14 rounded-full shadow-xl mb-4 hover:scale-105 active:scale-95 transition-all">▶ 繼續</button>
-            <button onclick="exitGame()" class="bg-white/20 hover:bg-white/30 text-white font-bold text-base py-3 px-10 rounded-full border border-white/40 active:scale-95 transition-all">退出</button>
+            <button onclick="resumeGame()" class="btn btn-primary btn-lg mb-4">▶ 繼續</button>
+            <button onclick="exitGame()" class="btn btn-ghost">離開遊戲</button>
         </div>
     </div>
 
     <!-- 結算視圖 -->
-    <div id="view-result-normal" class="fixed inset-0 z-50 bg-gradient-to-b from-green-500 to-blue-600 hidden flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto">
+    <div id="view-result-normal" class="fixed inset-0 z-50 hidden flex flex-col items-center justify-center p-8 text-white text-center overflow-y-auto" style="background:linear-gradient(180deg,#3D6B4A 0%,#4A8CA8 100%)">
         <div id="result-grade" class="text-8xl mb-2"></div>
         <h2 id="result-title" class="text-3xl font-black mb-1"></h2>
         <p id="result-accuracy" class="text-white/70 text-sm mb-6 tracking-wide"></p>
@@ -182,13 +206,13 @@
         </div>
         
         <div class="flex gap-3 w-full max-w-md">
-            <button class="flex-1 bg-white/25 hover:bg-white/35 text-white font-black text-base py-3 rounded-2xl backdrop-blur shadow-lg active:scale-95 transition-all border border-white/50" onclick="replayGame()">🔄 重新挑戰</button>
-            <button class="flex-1 bg-white text-blue-600 font-black text-base py-3 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all active:scale-95" onclick="exitGame()">繼續 →</button>
+            <button class="btn btn-ghost flex-1" onclick="replayGame()">🔄 重新挑戰</button>
+            <button class="btn btn-primary flex-1" onclick="exitGame()">繼續 →</button>
         </div>
     </div>
 
     <!-- 競技結算視圖 -->
-    <div id="view-result-comp" class="fixed inset-0 z-50 bg-gradient-to-b from-green-500 to-blue-600 hidden flex flex-col items-center justify-center p-8 text-white overflow-y-auto">
+    <div id="view-result-comp" class="fixed inset-0 z-50 hidden flex flex-col items-center justify-center p-8 text-white overflow-y-auto" style="background:linear-gradient(180deg,#3D6B4A 0%,#4A8CA8 100%)">
         <h2 id="comp-song-title" class="text-5xl font-black mb-2 text-center drop-shadow-lg">比賽結果</h2>
         <p class="text-white/70 text-sm mb-12">與對手的表現對比</p>
         
@@ -226,8 +250,8 @@
         </div>
         
         <div class="w-full max-w-lg flex flex-col gap-3">
-            <button class="w-full bg-white text-blue-600 font-black text-lg py-4 rounded-2xl shadow-xl hover:shadow-2xl active:scale-95 transition-all" onclick="startCompetitionMatch()">🔄 新回合</button>
-            <button class="w-full bg-white/25 hover:bg-white/35 text-white font-black text-lg py-4 rounded-2xl backdrop-blur shadow-lg active:scale-95 transition-all border border-white/50" onclick="exitGame()">← 回到選單</button>
+            <button class="btn btn-primary btn-lg btn-full" onclick="startCompetitionMatch()">🔄 新回合</button>
+            <button class="btn btn-ghost btn-lg btn-full" onclick="exitGame()">← 回到選單</button>
         </div>
     </div>
 

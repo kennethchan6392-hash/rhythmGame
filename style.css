@@ -2,32 +2,39 @@
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
 :root {
-    --primary-pink: #FF65A3; --primary-pink-dark: #D83A7D;
-    --primary-yellow: #FFCB45; --primary-yellow-dark: #E6A213;
-    --primary-green: #00D28E; --primary-green-dark: #00A66D;
-    --primary-blue: #00A6ED; --primary-blue-dark: #007AB2;
-    --primary-purple: #8B66FF; --primary-purple-dark: #6236FF;
-    --primary-red: #FF4A6B; --primary-red-dark: #D12546;
+    /* ===== 宮崎駿 Ghibli Palette ===== */
+    --primary-pink: #D4889A;   --primary-pink-dark: #B0607A;
+    --primary-yellow: #D4A843; --primary-yellow-dark: #A87C2A;
+    --primary-green: #4A7C59;  --primary-green-dark: #2D5240;
+    --primary-blue: #7BAEC8;   --primary-blue-dark: #5A8CA8;
+    --primary-purple: #8B7BAA; --primary-purple-dark: #6A5888;
+    --primary-red: #C45A5A;    --primary-red-dark: #9A3A3A;
 
-    --bg-paper: #FFFDF8; --bg-light: #F4F7FB;
-    --text-dark: #2D3142; --text-light: #7E84A3;
+    --bg-paper: #F5EDD8; --bg-light: #EDE4D0;
+    --text-dark: #3A2B1A; --text-light: #7A6B50;
 
     --border-radius: 24px; --btn-radius: 16px;
-    --shadow-glass: 0 15px 35px rgba(139, 102, 255, 0.15);
-    --shadow-sm: 0 4px 10px rgba(0,0,0,0.04);
-    --shadow-md: 0 10px 25px rgba(45, 49, 66, 0.08);
+    --shadow-glass: 0 15px 35px rgba(74, 124, 89, 0.2);
+    --shadow-sm: 0 4px 10px rgba(58, 43, 26, 0.06);
+    --shadow-md: 0 10px 25px rgba(58, 43, 26, 0.10);
     --highlight-inner: inset 0 2px 0 rgba(255,255,255,0.4);
 }
 
 body {
     font-family: 'Nunito', sans-serif;
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6D9 20%, #FFD700 40%, #87CEEB 70%, #DDA0DD 100%);
+    background: linear-gradient(160deg,
+        #A8C8D8 0%,
+        #B8D0B0 22%,
+        #D0C898 48%,
+        #A8C898 72%,
+        #7A9878 100%
+    );
     background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
+    animation: gradientShift 25s ease infinite;
     touch-action: none; 
     overflow: hidden;
     user-select: none;
-    color: #333;
+    color: #3A2B1A;
     position: relative;
 }
 
@@ -35,12 +42,13 @@ body::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: 
-        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
-        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-        radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.12) 2px, transparent 2px);
-    background-size: 100px 100px, 150px 150px, 200px 200px;
-    animation: twinkling 8s ease-in-out infinite;
+    background-image:
+        radial-gradient(ellipse 90px 30px at 12% 12%, rgba(255,255,255,0.55) 0%, transparent 100%),
+        radial-gradient(ellipse 60px 22px at 68%  8%, rgba(255,255,255,0.45) 0%, transparent 100%),
+        radial-gradient(ellipse 110px 35px at 42%  4%, rgba(255,255,255,0.40) 0%, transparent 100%),
+        radial-gradient(ellipse 50px 18px at 88% 17%, rgba(255,255,255,0.35) 0%, transparent 100%);
+    background-size: 100% 100%;
+    animation: cloudDrift 30s ease-in-out infinite alternate;
     pointer-events: none;
     z-index: 0;
 }
@@ -51,9 +59,48 @@ body::before {
     100% { background-position: 0% 50%; }
 }
 
-@keyframes twinkling {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+/* ===== 浮動音符裝飾 ===== */
+.floating-notes-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+.fn {
+    position: absolute;
+    left: var(--x);
+    bottom: -40px;
+    font-size: calc(1.2rem * var(--s));
+    color: rgba(74, 124, 89, 0.35);
+    animation: noteFloat 7s ease-in-out calc(var(--d)) infinite;
+    will-change: transform, opacity;
+    user-select: none;
+}
+@keyframes noteFloat {
+    0%   { transform: translateY(0)   rotate(0deg);   opacity: 0; }
+    10%  { opacity: 1; }
+    80%  { opacity: 0.7; }
+    100% { transform: translateY(-110vh) rotate(25deg); opacity: 0; }
+}
+
+/* Make the level-list sit above the notes layer */
+#view-learning .no-scrollbar { position: relative; z-index: 1; }
+#view-learning > div:first-child { position: relative; z-index: 1; }
+
+/* ===== 進入動畫：關卡累积入場 ===== */
+@keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(28px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.level-card {
+    animation: cardSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: var(--card-delay, 0s);
+}
+
+@keyframes cloudDrift {
+    0%   { transform: translateX(-3%); opacity: 0.75; }
+    100% { transform: translateX( 3%); opacity: 1.0; }
 }
 
 @keyframes bounce {
@@ -74,26 +121,26 @@ body::before {
 
 /* 關卡卡片樣式 */
 .level-card {
-    background: linear-gradient(135deg, rgba(255, 182, 193, 0.85), rgba(255, 218, 185, 0.85));
+    background: linear-gradient(135deg, rgba(245, 237, 216, 0.92), rgba(200, 220, 185, 0.90));
     backdrop-filter: blur(12px);
     border-radius: 28px;
     position: relative;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 10px 30px rgba(255, 105, 180, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 10px 30px rgba(74, 124, 89, 0.25);
+    border: 2px solid rgba(168, 197, 150, 0.5);
     padding: 4px;
 }
 .level-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 15px 40px rgba(255, 105, 180, 0.4);
+    box-shadow: 0 15px 40px rgba(74, 124, 89, 0.38);
 }
 .level-card:active { 
     transform: scale(0.92);
-    box-shadow: 0 12px 30px rgba(255, 105, 180, 0.35);
+    box-shadow: 0 12px 30px rgba(74, 124, 89, 0.30);
 }
 .level-card-header { 
-    background: linear-gradient(135deg, #FFD700, #FFA500);
+    background: linear-gradient(135deg, #4A7C59, #5A9C6C);
     border-radius: 24px;
     font-weight: 900;
     color: white;
@@ -101,13 +148,13 @@ body::before {
 }
 .level-num-badge {
     position: absolute; right: 16px; top: 16px;
-    background: linear-gradient(135deg, #FF1493, #FF69B4);
+    background: linear-gradient(135deg, #8B6348, #C4956A);
     color: white; font-weight: 900;
     padding: 10px 18px; border-radius: 18px; 
-    box-shadow: 0 6px 20px rgba(255, 20, 147, 0.45);
+    box-shadow: 0 6px 20px rgba(139, 99, 72, 0.45);
     z-index: 10;
     font-size: 1.1em;
-    border: 3px solid white;
+    border: 3px solid rgba(255,255,255,0.8);
     transition: all 0.3s ease;
 }
 .level-card:hover .level-num-badge {
@@ -116,23 +163,23 @@ body::before {
 
 /* 表演模式卡片 */
 .song-card {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(200, 230, 255, 0.92));
+    background: linear-gradient(135deg, rgba(245, 237, 216, 0.95), rgba(200, 220, 180, 0.92));
     border-radius: 28px;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(135, 206, 235, 0.35);
-    border: 2px solid rgba(135, 206, 250, 0.5);
+    box-shadow: 0 10px 30px rgba(74, 124, 89, 0.25);
+    border: 2px solid rgba(168, 197, 150, 0.5);
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .song-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 45px rgba(135, 206, 235, 0.5);
+    box-shadow: 0 15px 45px rgba(74, 124, 89, 0.40);
 }
 .song-card-title { 
     font-size: 1.3rem; 
     font-weight: 900; 
     padding: 20px 24px; 
-    border-bottom: 3px solid #FFD700;
-    background: linear-gradient(135deg, #87CEEB, #B0E0E6);
+    border-bottom: 3px solid #D4A843;
+    background: linear-gradient(135deg, #4A7C59, #5A9C6C);
     color: white;
     letter-spacing: 0.5px;
 }
@@ -146,15 +193,15 @@ body::before {
     color: #4a5568; 
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
-    background: linear-gradient(135deg, #E8F5FF, #F0F9FF);
+    background: linear-gradient(135deg, #EFF5E8, #E8F0D8);
     border-radius: 16px;
     border: 2px solid transparent;
 }
 .diff-btn:hover { 
-    background: linear-gradient(135deg, #FFE4B5, #FFDAB9);
+    background: linear-gradient(135deg, #D4E8C8, #C8DDB8);
     transform: translateY(-4px);
-    color: #D84315;
-    border-color: #FFD700;
+    color: #2D5240;
+    border-color: #6B9E6B;
 }
 .diff-btn:active {
     transform: scale(0.95);
@@ -162,10 +209,10 @@ body::before {
 
 /* 畫布容器 */
 .score-container { 
-    background: linear-gradient(135deg, rgba(255, 250, 240, 0.95), rgba(240, 255, 240, 0.95));
+    background: linear-gradient(135deg, rgba(245, 237, 216, 0.95), rgba(220, 235, 210, 0.95));
     border-radius: 24px; 
-    box-shadow: 0 12px 35px rgba(100, 100, 100, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    border: 3px solid rgba(139, 69, 19, 0.25);
+    box-shadow: 0 12px 35px rgba(74, 124, 89, 0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+    border: 3px solid rgba(107, 142, 91, 0.25);
     backdrop-filter: blur(8px);
     position: relative;
     overflow: hidden;
@@ -188,16 +235,16 @@ body::before {
 
 /* 音樂遊戲視圖 */
 #view-game {
-    background: linear-gradient(135deg, rgba(255, 200, 215, 0.9), rgba(200, 240, 255, 0.9));
+    background: linear-gradient(160deg, #8FC4A8 0%, #A8CCD4 50%, #88B8A0 100%);
     border-radius: 0;
 }
 
 #view-game .game-header {
-    background: linear-gradient(135deg, #FF69B4 0%, #87CEEB 100%);
+    background: linear-gradient(135deg, #3D6B4A 0%, #5A8CA0 100%);
     color: white;
     padding: 20px 24px;
     border-radius: 0 0 24px 24px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 #view-game .game-title {
@@ -213,11 +260,11 @@ body::before {
     font-weight: 700;
 }
 #hit-pad { 
-    background: linear-gradient(135deg, #00D28E, #00FF88);
+    background: linear-gradient(135deg, #4A7C59, #5A9C6C);
     border-radius: 24px; 
-    border: 4px solid #00FF88; 
+    border: 4px solid #7AB888; 
     transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+    box-shadow: 0 8px 25px rgba(74, 124, 89, 0.45);
     position: relative;
     overflow: hidden;
 }
@@ -225,25 +272,25 @@ body::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.3) 0%, transparent 70%);
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.25) 0%, transparent 70%);
     pointer-events: none;
 }
 #hit-pad:hover {
-    box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
+    box-shadow: 0 10px 30px rgba(74, 124, 89, 0.6);
     transform: translateY(-2px);
 }
 #hit-pad.active-hit { 
-    background: linear-gradient(135deg, #00A66D, #00DD77);
-    box-shadow: 0 12px 40px rgba(0, 255, 136, 0.7);
+    background: linear-gradient(135deg, #2D5240, #4A7C59);
+    box-shadow: 0 12px 40px rgba(74, 124, 89, 0.7);
     transform: scale(0.93);
 }
 
 /* 底部導航欄 */
 .bottom-nav { 
-    background: linear-gradient(180deg, rgba(255, 182, 193, 0.4), rgba(135, 206, 235, 0.4));
+    background: linear-gradient(180deg, rgba(168, 200, 168, 0.45), rgba(60, 90, 50, 0.55));
     backdrop-filter: blur(20px); 
-    border-top: 2px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 -8px 30px rgba(100, 100, 100, 0.15);
+    border-top: 2px solid rgba(168, 197, 150, 0.5);
+    box-shadow: 0 -8px 30px rgba(40, 70, 30, 0.2);
 }
 .nav-item { 
     opacity: 0.45; 
@@ -259,9 +306,9 @@ body::before {
 }
 .nav-item.active { 
     opacity: 1;
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-6px) scale(1.2);
-    box-shadow: 0 8px 24px rgba(255, 182, 193, 0.5);
+    box-shadow: 0 8px 24px rgba(74, 124, 89, 0.45);
 }
 
 /* 競技圓形進度條 */
@@ -297,20 +344,102 @@ body::before {
     }
 }
 
-/* 按鈕樣式 */
+/* 按鈕基底 */
 button {
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, filter 0.12s ease;
     font-family: 'Nunito', sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
-button:hover:not(:disabled) {
+/* ===== Ghibli Button System ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.18s ease, filter 0.12s ease;
+    letter-spacing: 0.4px;
+    text-align: center;
+}
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s ease;
+    pointer-events: none;
+}
+.btn:hover::after  { background: rgba(255,255,255,0.10); }
+.btn:active        { transform: scale(0.92) !important; filter: brightness(0.88); }
+
+/* Forest green — 主要動作 */
+.btn-primary {
+    background: linear-gradient(160deg, #5A8C69 0%, #3A6048 100%);
+    color: #F0EDDE;
+    border-radius: 18px;
+    padding: 14px 32px;
+    font-size: 1.05rem;
+    box-shadow: 0 5px 18px rgba(40,80,40,0.38),
+                inset 0 2px 0 rgba(255,255,255,0.22),
+                inset 0 -3px 0 rgba(0,0,0,0.15);
+    border: 1.5px solid rgba(255,255,255,0.18);
+}
+.btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 9px 28px rgba(40,80,40,0.50),
+                inset 0 2px 0 rgba(255,255,255,0.28);
 }
 
-button:active:not(:disabled) {
-    transform: scale(0.95);
+/* Warm wood — 登入/確認 */
+.btn-wood {
+    background: linear-gradient(160deg, #C8956A 0%, #8B6348 100%);
+    color: #F5EDD8;
+    border-radius: 18px;
+    padding: 14px 32px;
+    font-size: 1.05rem;
+    box-shadow: 0 5px 18px rgba(100,60,20,0.40),
+                inset 0 2px 0 rgba(255,255,255,0.20),
+                inset 0 -3px 0 rgba(0,0,0,0.15);
+    border: 1.5px solid rgba(255,255,255,0.16);
 }
+.btn-wood:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 28px rgba(100,60,20,0.52),
+                inset 0 2px 0 rgba(255,255,255,0.28);
+}
+
+/* Frosted glass — 次要/返回 */
+.btn-ghost {
+    background: rgba(255,255,255,0.13);
+    color: #F5EDD8;
+    border-radius: 18px;
+    padding: 14px 32px;
+    font-size: 1.05rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15),
+                inset 0 1px 0 rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.28);
+}
+.btn-ghost:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.22);
+    box-shadow: 0 7px 22px rgba(0,0,0,0.22);
+}
+
+/* Size modifiers */
+.btn-sm  { padding: 8px 20px;  font-size: 0.88rem; border-radius: 14px; }
+.btn-lg  { padding: 16px 40px; font-size: 1.15rem; border-radius: 22px; }
+.btn-full { width: 100%; }
 
 /* 輸入框樣式 */
 input[type="text"] {
@@ -465,7 +594,7 @@ input[type="text"]:focus {
 
 .game-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #FFD700, #FF69B4);
+    background: linear-gradient(90deg, #D4A843, #4A7C59);
     border-radius: 2px;
     transition: width 0.3s ease;
 }
@@ -580,8 +709,40 @@ input[type="text"]:focus {
     font-family: 'Nunito', sans-serif;
     letter-spacing: 0.3px;
 }
-.diff-badge.diff-beginner    { background: rgba(74, 222, 128, 0.9);  color: #14532d; }
-.diff-badge.diff-elementary  { background: rgba(250, 204, 21, 0.9);  color: #713f12; }
-.diff-badge.diff-intermediate{ background: rgba(251, 146, 60, 0.9);  color: #7c2d12; }
-.diff-badge.diff-advanced    { background: rgba(248, 113, 113, 0.9); color: #7f1d1d; }
-.diff-badge.diff-challenge   { background: rgba(167, 139, 250, 0.9); color: #2e1065; }
+.diff-badge.diff-beginner    { background: rgba(107, 158, 107, 0.9); color: #1a3d1a; }
+.diff-badge.diff-elementary  { background: rgba(192, 158,  60, 0.9); color: #3a2808; }
+.diff-badge.diff-intermediate{ background: rgba(172, 108,  55, 0.9); color: #3a1808; }
+.diff-badge.diff-advanced    { background: rgba(155,  72,  72, 0.9); color: #3a1010; }
+.diff-badge.diff-challenge   { background: rgba( 80,  60, 110, 0.9); color: #F5EDD8; }
+
+/* ===== Ghibli: 婤婧 Soot Sprites ===== */
+.soot-sprite {
+    position: fixed;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #3a3a3a 25%, #111 100%);
+    pointer-events: none;
+    z-index: 0;
+    animation: sootPeek var(--sp-dur, 3s) ease-in-out var(--sp-delay, 0s) infinite;
+}
+@keyframes sootPeek {
+    0%,100% { opacity: 0;    transform: translateY(10px) scale(0.7); }
+    35%     { opacity: 0.28; transform: translateY(0)    scale(1); }
+    55%     { opacity: 0.20; transform: translateY(-3px) scale(1.08); }
+    75%     { opacity: 0.10; transform: translateY(5px)  scale(0.85); }
+}
+
+/* ===== Ghibli: Forest Ground ===== */
+body::after {
+    content: '';
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 20%;
+    background: linear-gradient(
+        0deg,
+        rgba(30, 55, 20, 0.45) 0%,
+        rgba(55, 88, 35, 0.22) 55%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 0;
+}

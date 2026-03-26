@@ -1,4 +1,4 @@
-// --- 核心變數 ---
+// #region ===== CORE VARIABLES =====
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let playerName = "Player", currentGameMode = 'learning';
 let bgmBuffer = null, bgmSource = null;
@@ -9,7 +9,58 @@ let lastGameConfig = null; // For replay
 
 const ROW_HEIGHT = 120, PADDING_X = 60, LINE_Y_OFFSET = 50, DOT_Y_OFFSET = 85;
 
-// ===== FIREBASE CONFIGURATION =====
+// #endregion
+
+// #region ===== AUDIO SFX =====
+/** Shared helper — schedules one Web Audio note. `at` defaults to audioCtx.currentTime. */
+function _sfxNote(type, f1, f2, vol, dur, at) {
+    try {
+        if (at === undefined) at = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(f1, at);
+        if (f2 && f2 !== f1) osc.frequency.exponentialRampToValueAtTime(f2, at + dur);
+        g.gain.setValueAtTime(vol, at);
+        g.gain.exponentialRampToValueAtTime(0.001, at + dur);
+        osc.start(at); osc.stop(at + dur);
+    } catch(e) {}
+}
+
+let lastMetronomeBeat = -1;
+
+function sfx_hit()   { _sfxNote('triangle', 900, 300, 0.45, 0.12); }
+function sfx_miss()  { _sfxNote('sine', 180, 80, 0.30, 0.22); }
+function sfx_tap()   { if (audioCtx.state !== 'running') return; _sfxNote('triangle', 680, 280, 0.14, 0.09); }
+function sfx_metronome(strong) { _sfxNote('square', strong ? 1200 : 800, null, strong ? 0.15 : 0.07, 0.04); }
+
+function sfx_combo(combo) {
+    const base = combo >= 30 ? 880 : combo >= 20 ? 660 : 440;
+    const t = audioCtx.currentTime;
+    [1, 1.25, 1.5, 2].forEach((m, i) => _sfxNote('sine', base * m, null, 0.22, 0.18, t + i * 0.07));
+}
+
+function sfx_countdown(isGo) {
+    if (isGo) {
+        const t = audioCtx.currentTime;
+        [523, 784].forEach((f, i) => _sfxNote('sine', f, null, 0.35, 0.2, t + i * 0.11));
+    } else {
+        _sfxNote('sine', 440, null, 0.28, 0.1);
+    }
+}
+
+function sfx_fanfare(isGood) {
+    const melody = isGood ? [523, 659, 784, 1047] : [523, 494, 440, 392];
+    let t = audioCtx.currentTime + 0.15;
+    melody.forEach((freq, i) => {
+        const dur = i === melody.length - 1 ? 0.45 : 0.13;
+        _sfxNote('sine', freq, null, 0.28, dur, t);
+        t += dur + 0.03;
+    });
+}
+// #endregion
+
+// #region ===== FIREBASE & LEADERBOARD =====
 // To enable online leaderboard:
 // 1. Go to https://console.firebase.google.com/
 // 2. Create a new project (free)
@@ -46,7 +97,9 @@ function initFirebase() {
     }
 }
 
-// ===== STUDENT PROFILE =====
+// #endregion
+
+// #region ===== STUDENT PROFILE =====
 let studentProfile = null;
 
 function loadStudentProfile() {
@@ -206,7 +259,9 @@ function escapeHTML(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// ===== MUSIC NOTE/REST IMAGES (SVG Data URIs) =====
+// #endregion
+
+// #region ===== ASSETS & LEVEL DATA =====
 var NOTE_IMAGES = {};
 
 var NOTE_SVG_STRINGS = {
@@ -216,7 +271,7 @@ var NOTE_SVG_STRINGS = {
     quarter: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 62"><line x1="19" y1="4" x2="19" y2="48" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="10" cy="48" rx="9" ry="6" fill="#1a1a2e" transform="rotate(-20,10,48)"/></svg>',
     half: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 62"><line x1="19" y1="4" x2="19" y2="48" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="10" cy="48" rx="9" ry="6" fill="none" stroke="#1a1a2e" stroke-width="2.2" transform="rotate(-20,10,48)"/></svg>',
     eighth: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 62"><line x1="19" y1="4" x2="19" y2="48" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="10" cy="48" rx="9" ry="6" fill="#1a1a2e" transform="rotate(-20,10,48)"/><path d="M19,4 C25,9 27,18 22,26" fill="none" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round"/></svg>',
-    sixteenth: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 62"><line x1="19" y1="4" x2="19" y2="48" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="10" cy="48" rx="9" ry="6" fill="#1a1a2e" transform="rotate(-20,10,48)"/><path d="M19,4 C25,9 27,16 22,22" fill="none" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round"/><path d="M19,12 C25,17 27,24 22,30" fill="none" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round"/></svg>',
+    sixteenth: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 66"><line x1="21" y1="4" x2="21" y2="52" stroke="#1a1a2e" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="11" cy="52" rx="9" ry="6" fill="#1a1a2e" transform="rotate(-20,11,52)"/><path d="M21,4 C28,10 30,18 24,26" fill="none" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round"/><path d="M21,14 C28,20 30,28 24,36" fill="none" stroke="#1a1a2e" stroke-width="2.8" stroke-linecap="round"/></svg>',
     rest_quarter: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 44"><path d="M10,4 L4,13 L12,22 L5,33" fill="none" stroke="#1a1a2e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="37" r="3.5" fill="#1a1a2e"/></svg>',
     rest_half: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14"><line x1="0" y1="13" x2="22" y2="13" stroke="#1a1a2e" stroke-width="2"/><rect x="3" y="5" width="16" height="8" rx="1" fill="#1a1a2e"/></svg>',
     rest_whole: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14"><line x1="0" y1="1" x2="22" y2="1" stroke="#1a1a2e" stroke-width="2"/><rect x="3" y="1" width="16" height="8" rx="1" fill="#1a1a2e"/></svg>',
@@ -261,7 +316,9 @@ const SONGS = [
     { id: 's2', title: '🎵 用背脊唱情歌', bpm: 76, offset: 0, url: './用背脊唱情歌-official-video.mp3', theme: 'love', emoji: '💝🎤🌹' }
 ];
 
-// --- 初始化 ---
+// #endregion
+
+// #region ===== UI & NAVIGATION =====
 function initApp() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     document.getElementById('start-overlay').classList.add('hidden');
@@ -297,8 +354,9 @@ function renderLevelList() {
     const list = document.getElementById('level-list');
     list.innerHTML = LEARNING_LEVELS.map(lvl => {
         const diffClass = DIFF_COLORS[lvl.difficulty] || '';
+        const delay = ((lvl.id - 1) * 0.07).toFixed(2);
         return `
-        <div class="level-card cursor-pointer hover:scale-105 transition-transform" onclick="startLearning(${lvl.id})">
+        <div class="level-card cursor-pointer hover:scale-105 transition-transform" style="--card-delay:${delay}s" onclick="startLearning(${lvl.id})">
             <div class="level-num-badge">${lvl.id}</div>
             <div class="level-card-header p-4 pr-14">
                 <div class="flex items-start gap-2 mb-1">
@@ -320,7 +378,8 @@ function renderSongList() {
             desert: '🏜️🌅🎸🤠',
             love: '💝🎤🌹💕',
         };
-        const themeEmoji = themeEmojis[song.theme]?.split('')[Math.floor(Math.random() * themeEmojis[song.theme]?.length)] || '🎵';
+        const pool = [...(themeEmojis[song.theme] || '🎵🎵🎵🎵')];
+        const themeEmoji = pool[Math.floor(Math.random() * pool.length)];
         return `
         <div class="song-card hover:shadow-lg transition-all">
             <div class="song-card-title text-slate-800 flex items-center gap-2">
@@ -415,7 +474,9 @@ function getVariedMeasurePattern(songId, difficulty, measureIndex) {
     return [{b:0,t:'quarter'},{b:1,t:'quarter'},{b:2,t:'quarter'},{b:3,t:'quarter'}];
 }
 
-// --- 遊戲引擎核心 ---
+// #endregion
+
+// #region ===== GAME ENGINE =====
 const CANVAS_CACHE = { scoreDisp: null, comboDisp: null, progressEl: null };
 
 function launchGameEngine(pattern, bpm, measures, titleText, songId, difficulty, audioOffset = 0) {
@@ -441,13 +502,17 @@ function launchGameEngine(pattern, bpm, measures, titleText, songId, difficulty,
         });
     }
     // Note Beaming (eighth and sixteenth notes)
+    // Eighth notes: beam pairs within the same beat (beat 0-1 and beat 2-3)
+    // Sixteenth notes: beam groups of up to 4 within the same beat (every 1.0 beat block)
     for (let i = 0; i < beatmap.length - 1; i++) {
         let n1 = beatmap[i], n2 = beatmap[i+1];
         if (n1.measure === n2.measure && n1.hitState !== 'rest' && n2.hitState !== 'rest') {
-            if (n1.type === 'eighth' && n2.type === 'eighth' && Math.floor(n1.beatInMeasure) === Math.floor(n2.beatInMeasure)) {
+            if (n1.type === 'eighth' && n2.type === 'eighth' &&
+                Math.floor(n1.beatInMeasure) === Math.floor(n2.beatInMeasure)) {
                 n1.beamWithNext = true; n2.beamWithPrev = true;
             }
-            if (n1.type === 'sixteenth' && n2.type === 'sixteenth' && Math.floor(n1.beatInMeasure * 4) === Math.floor(n2.beatInMeasure * 4)) {
+            if (n1.type === 'sixteenth' && n2.type === 'sixteenth' &&
+                Math.floor(n1.beatInMeasure) === Math.floor(n2.beatInMeasure)) {
                 n1.beamWithNext = true; n2.beamWithPrev = true;
             }
         }
@@ -499,6 +564,7 @@ function showCountdown(callback) {
             return;
         }
         overlay.innerHTML = `<div class="countdown-num">${nums[i]}</div>`;
+        sfx_countdown(i === nums.length - 1); // tick on 3/2/1, two-note 'GO' sound on 🎵
         i++;
         setTimeout(showNext, 700);
     }
@@ -514,9 +580,7 @@ function replayGame() {
     if (resultNormal) resultNormal.classList.add('hidden');
     if (resultComp) resultComp.classList.add('hidden');
 
-    if (currentGameMode === 'learning') {
-        launchGameEngine(c.pattern, c.bpm, c.measures, c.titleText, c.songId, c.difficulty, c.audioOffset);
-    } else if (bgmBuffer) {
+    if (currentGameMode === 'learning' || bgmBuffer) {
         launchGameEngine(c.pattern, c.bpm, c.measures, c.titleText, c.songId, c.difficulty, c.audioOffset);
     } else if (c.songId) {
         startSong(c.songId, c.difficulty);
@@ -626,7 +690,7 @@ function exitGame() {
     const navBar = document.getElementById('bottom-nav');
     if (navBar) navBar.classList.remove('hidden');
     
-    switchTab(currentGameMode === 'learning' ? 'learning' : (currentGameMode === 'performance' ? 'performance' : 'competition'));
+    switchTab(currentGameMode);
 }
 
 function pauseGame() {
@@ -662,7 +726,9 @@ function resumeGame() {
     animationId = requestAnimationFrame(gameLoop);
 }
 
-// --- 繪圖邏輯 ---
+// #endregion
+
+// #region ===== DRAWING =====
 const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
 
 function drawRest(x, yTop, restType) {
@@ -770,32 +836,47 @@ function drawNote(x, yTop, note, measureWidth) {
     if (note.type === 'eighth' || note.type === 'sixteenth') {
         if (note.beamWithNext) {
             const beamCount = note.type === 'sixteenth' ? 2 : 1;
-            const beatStep = note.type === 'sixteenth' ? 0.25 : 0.5;
-            const nStemX = x + (beatStep / 4) * measureWidth + noteHeadW/2;
-            ctx.lineWidth = 5;
+            const beatStep  = note.type === 'sixteenth' ? 0.25 : 0.5;
+            const nStemX    = x + (beatStep / 4) * measureWidth + noteHeadW / 2;
+            ctx.lineWidth = 5; ctx.strokeStyle = '#1a1a2e'; ctx.lineCap = 'butt';
             for (let b = 0; b < beamCount; b++) {
+                const by = sy + b * 8;
                 ctx.beginPath();
-                ctx.moveTo(stemX, sy + b * 8);
-                ctx.lineTo(nStemX, sy + b * 8);
+                ctx.moveTo(stemX,  by);
+                ctx.lineTo(nStemX, by);
                 ctx.stroke();
             }
         } else if (!note.beamWithPrev) {
-            // Single flag(s)
+            // Isolated note — draw flag(s)
             const flagCount = note.type === 'sixteenth' ? 2 : 1;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2.8; ctx.strokeStyle = '#1a1a2e'; ctx.lineCap = 'round';
             for (let f = 0; f < flagCount; f++) {
+                const fy = sy + f * 10;
                 ctx.beginPath();
-                ctx.moveTo(stemX, sy + f * 10);
-                ctx.quadraticCurveTo(stemX + 10, sy + f * 10 + 6, stemX + 8, sy + f * 10 + 16);
+                ctx.moveTo(stemX, fy);
+                ctx.quadraticCurveTo(stemX + 12, fy + 8, stemX + 8, fy + 18);
                 ctx.stroke();
             }
         }
+        // beamWithPrev only (last note in beam group): no flag/beam drawn forward — stem already drawn
     }
 }
 
+// #endregion
+
+// #region ===== GAME LOOP =====
 function gameLoop() {
     if (!isPlaying) return;
     const now = audioCtx.currentTime, absBeat = (now - gameStartTime) / (BEAT_MS / 1000);
+
+    // Metronome tick in learning mode (no BGM)
+    if (currentGameMode === 'learning') {
+        const thisBeat = Math.floor(absBeat);
+        if (thisBeat !== lastMetronomeBeat && thisBeat >= 0) {
+            lastMetronomeBeat = thisBeat;
+            sfx_metronome(thisBeat % 4 === 0);
+        }
+    }
     ctx.clearRect(0, 0, 800, 360);
     const mWidth = 800 - PADDING_X * 2, rows = currentGameMode === 'learning' ? 1 : 3, vOff = currentGameMode === 'learning' ? 120 : 0;
     const curMIdx = Math.max(0, Math.floor(absBeat / 4));
@@ -857,7 +938,8 @@ function gameLoop() {
                 const dy = yTop + DOT_Y_OFFSET;
                 if (n.hitState === 'pending' && absBeat > n.absoluteBeat + 0.3) { 
                     n.hitState = 'miss'; 
-                    stats.miss++; 
+                    stats.miss++;
+                    sfx_miss();
                     if (stats.combo >= 3) showHitFeedback('Miss...', '#ef4444');
                     stats.combo = 0; 
                 }
@@ -942,6 +1024,9 @@ function handleHit() {
         stats.score += 10 + (Math.floor(stats.combo / 5) * 5);
         if (stats.combo > stats.maxCombo) stats.maxCombo = stats.combo;
         
+        sfx_hit();
+        if (stats.combo % 10 === 0) sfx_combo(stats.combo);
+        
         // Visual feedback
         showHitFeedback('Perfect!', '#22c55e');
         if (stats.combo > 0 && stats.combo % 10 === 0) {
@@ -989,6 +1074,7 @@ function getGrade(accuracy) {
 function finishGame() {
     isPlaying = false;
     cancelAnimationFrame(animationId);
+    lastMetronomeBeat = -1;
     
     if (bgmSource) {
         try { bgmSource.stop(); } catch (e) { console.warn('Audio already stopped:', e); }
@@ -1001,6 +1087,7 @@ function finishGame() {
     // Save score to leaderboard
     var levelOrSong = lastGameConfig ? (lastGameConfig.titleText || '') : '';
     saveScoreToLeaderboard(stats.score, accuracy, stats.maxCombo, currentGameMode, levelOrSong);
+    sfx_fanfare(accuracy >= 70);
     
     if (currentGameMode === 'competition') {
         const pPct = accuracy;
@@ -1050,7 +1137,9 @@ function finishGame() {
     }
 }
 
-// Event listeners with error handling
+// #endregion
+
+// #region ===== EVENT LISTENERS =====
 const hitPad = document.getElementById('hit-pad');
 if (hitPad) {
     hitPad.addEventListener('mousedown', handleHit);
@@ -1068,3 +1157,9 @@ window.addEventListener('keydown', e => {
         else if (isPaused) resumeGame();
     }
 });
+
+// 全域 UI 音效：所有可互動元件點擊時播放輕觸音
+document.addEventListener('pointerdown', e => {
+    if (e.target.closest('button, .nav-item, .diff-btn, .lb-filter-btn')) sfx_tap();
+}, { passive: true });
+// #endregion

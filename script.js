@@ -480,6 +480,9 @@ function getVariedMeasurePattern(songId, difficulty, measureIndex) {
 const CANVAS_CACHE = { scoreDisp: null, comboDisp: null, progressEl: null };
 
 function launchGameEngine(pattern, bpm, measures, titleText, songId, difficulty, audioOffset = 0) {
+    cancelAnimationFrame(animationId);
+    isPlaying = false;
+    isPaused = false;
     lastGameConfig = { pattern, bpm, measures, titleText, songId, difficulty, audioOffset };
     totalMeasures = measures;
     BEAT_MS = (60 / bpm) * 1000;
@@ -769,8 +772,8 @@ function drawRest(x, yTop, restType) {
             break;
         case 'sixteenth':
             ctx.beginPath(); ctx.moveTo(x, ly - 12); ctx.lineTo(x, ly + 4); ctx.stroke();
-            ctx.beginPath(); ctx.arc(x + 3, ly - 9, 2.5, 0, Math.PI*2);
-            ctx.arc(x + 3, ly - 5, 2.5, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(x + 3, ly - 9, 2.5, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(x + 3, ly - 5, 2.5, 0, Math.PI*2); ctx.stroke();
             break;
     }
 }
